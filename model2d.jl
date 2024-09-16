@@ -176,8 +176,8 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			end
 			
 			# div and curl terms 1/6
-			head_d = (L1 + 4*L3) * s_0^2/9
-			head_c = (L2 + 4*L4) * s_0^2/9
+			head_d1 = (L1 + 4*L3) * s_0^2/9
+			head_c1 = (L2 + 4*L4) * s_0^2/9
 			for j_ind=1:3
 				j = T[ell,j_ind]
 				for beta=1:2
@@ -185,11 +185,11 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 					# Div term
 					dotted = side11[ell,j_ind,beta] * side11[ell,z_ind,y] +
 							side12[ell,j_ind,beta] * side12[ell,z_ind,y]
-					H[2*(z-1)+y] += head_d * qjb * dotted * area * K0
+					H[2*(z-1)+y] += head_d1 * qjb * dotted * area * K0
 					# Curl term
 					dotted = sideC1[ell,j_ind,beta] * sideC1[ell,z_ind,y] +
 							sideC2[ell,j_ind,beta] * sideC2[ell,z_ind,y]
-					H[2*(z-1)+y] += head_c * qjb * dotted * area * K0
+					H[2*(z-1)+y] += head_c1 * qjb * dotted * area * K0
 				end
 			end
 			
@@ -198,8 +198,10 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			# product of two vectors in R2
 			
 			# term 2/6 and 3/6
-			head_d = (L1 - 2*L3) * s_0/3
-			# head_c = (L2 - 2*L4) * s_0/3
+			head_d2 = (L1 - 2*L3) * s_0/3
+			head_d3 = (L1 + 2*L3) * s_0/3
+			# head_c2 = (L2 - 2*L4) * s_0/3
+			# head_c3 = (L2 + 2*L4) * s_0/3
 			for j_ind=1:3, k_ind=1:3
 				j, k = T[ell,j_ind], T[ell,k_ind]
 				for beta=1:2, gamma=1:2
@@ -208,16 +210,16 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 					# Div terms
 					dotted = side11[ell,j_ind,beta] * side21[ell,z_ind,gamma,y] +
 							side12[ell,j_ind,beta] * side22[ell,z_ind,gamma,y]
-					H[2*(z-1)+y] += head_d * qjb * qkg * dotted * area * K1
+					H[2*(z-1)+y] += head_d2 * qjb * qkg * dotted * area * K1
 					dotted = side11[ell,j_ind,beta] * side21[ell,k_ind,y,gamma] +
 							side12[ell,j_ind,beta] * side22[ell,k_ind,y,gamma]
-					H[2*(z-1)+y] += head_d * qjb * qkg * dotted * area * K1
+					H[2*(z-1)+y] += head_d3 * qjb * qkg * dotted * area * K1
 				end
 			end
 			
 			# term 4/6
-			head_d = (L1 - 2*L3) * s_0/3
-			# head_c = (L2 - 2*L4) * s_0/3
+			head_d4 = (L1 - 2*L3) * s_0/3
+			# head_c4 = (L2 - 2*L4) * s_0/3
 			for i_ind=1:3, j_ind=1:3
 				i, j = T[ell,i_ind], T[ell,j_ind]
 				for alpha=1:2, beta=1:2
@@ -226,13 +228,15 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 					# Div term
 					dotted = side21[ell,j_ind,alpha,beta] * side11[ell,z_ind,y] +
 							side22[ell,j_ind,alpha,beta] * side12[ell,z_ind,y]
-					H[2*(z-1)+y] += head_d * qiaqjb * dotted * area * K1
+					H[2*(z-1)+y] += head_d4 * qiaqjb * dotted * area * K1
 				end
 			end
 			
 			# term 5/6 and 6/6
-			head_d = L1 + L3
-			# head_c = L2 + L4
+			head_d5 = L1 + L3
+			head_d6 = L1 - L3
+			# head_c5 = L2 + L4
+			# head_c6 = L2 - L4
 			for i_ind=1:3, j_ind=1:3, k_ind=1:3
 				i, j, k = T[ell,i_ind], T[ell,j_ind], T[ell,k_ind]
 				for alpha=1:2, beta=1:2, gamma=1:2
@@ -242,10 +246,10 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 					# Div terms
 					dotted = side21[ell,j_ind,alpha,beta] * side21[ell,z_ind,gamma,y] +
 							side22[ell,j_ind,alpha,beta] * side22[ell,z_ind,gamma,y]
-					H[2*(z-1)+y] += head_d * qiaqjb * qkg * dotted * area * K2[i_ind,k_ind]
+					H[2*(z-1)+y] += head_d5 * qiaqjb * qkg * dotted * area * K2[i_ind,k_ind]
 					dotted = side21[ell,j_ind,alpha,beta] * side21[ell,k_ind,y,gamma] +
 							side22[ell,j_ind,alpha,beta] * side22[ell,k_ind,y,gamma]
-					H[2*(z-1)+y] += head_d * qiaqjb * qkg * dotted * area * K2[i_ind,z_ind]
+					H[2*(z-1)+y] += head_d6 * qiaqjb * qkg * dotted * area * K2[i_ind,z_ind]
 				end
 			end
 			
@@ -313,8 +317,8 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			end
 			
 			# term 2/3
-			head_d = 1/2 * (L1 - 2*L3) * s_0/3
-			# head_c = 1/2 * (L2 - 2*L4) * s_0/3
+			head_d = (L1 - 2*L3) * s_0/3
+			# head_c = (L2 - 2*L4) * s_0/3
 			for j_ind=1:3, k_ind=1:3, z_ind=1:3
 				j, k, z = T[ell,j_ind], T[ell,k_ind], T[ell,z_ind]
 				for beta=1:2, gamma=1:2, y=1:2
@@ -444,16 +448,9 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 	
 	# Step 5: iterate!
 	if get_energy
-		energies = Float64[]
+		energies = [energy(Q0)]
 	end
 	Q = Q0
-	
-	if trialnum == 2 && t0 == 0
-		plot_eigenvec(Q, 0.025)
-		savefig(fileprefix * "_vec_0.0.png")
-		plot_eigenval(Q)
-		savefig(fileprefix * "_val_0.0.png")
-	end
 	
 	printing = false
 	for current_time = t0+timestep:timestep:max_time
@@ -479,8 +476,18 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 		end
 		Q = newX
 		
-		if trialnum == 2 && (current_time % 0.5 == 0 || current_time == timestep) && (current_time < 80 || current_time % 10 == 0)	
-			if current_time in [timestep, 5, 10, 15, 20, 25, 30, 60, 90]  # change for each tactoid
+		if trialnum >= 3 && (current_time % 0.5 == 0 || current_time == timestep) && (current_time < 80 || current_time % 10 == 0)
+			if trialnum == 3 && (current_time in [timestep, 15, 30, 45, 60, 75, 90, 180, 270] || current_time % 100 == 0)
+				open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
+					write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
+				end
+			end
+			if trialnum == 4 && (current_time in [timestep, 5, 10, 15, 20, 25, 30, 60, 90] || current_time % 100 == 0)
+				open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
+					write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
+				end
+			end
+			if trialnum == 5 && current_time in [timestep, 5, 10, 15, 20, 25, 30, 35, 40]
 				open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
 					write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
 				end

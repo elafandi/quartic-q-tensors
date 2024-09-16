@@ -6,7 +6,7 @@ function crossmat(v, mat)
 	return [v[1] * mat[1,2] - v[2] * mat[1,1], v[1] * mat[2,2] - v[2] * mat[2,1]]
 end
 
-function get_energy(fname, gridpoints=320, fname2=nothing)
+function get_energy(fname, gridpoints=400, fname2=nothing)
 	Lx, Ly = 2, 2
 	P, T, N, V, L = triangulate_square(Lx, Ly, gridpoints+1)
 	
@@ -151,8 +151,8 @@ function get_energy(fname, gridpoints=320, fname2=nothing)
 			end
 			
 			# term 2/3
-			head_d = 1/2 * (L1 - 2*L3) * s_0/3
-			# head_c = 1/2 * (L2 - 2*L4) * s_0/3
+			head_d = (L1 - 2*L3) * s_0/3
+			# head_c = (L2 - 2*L4) * s_0/3
 			for j_ind=1:3, k_ind=1:3, z_ind=1:3
 				j, k, z = T[ell,j_ind], T[ell,k_ind], T[ell,z_ind]
 				for beta=1:2, gamma=1:2, y=1:2

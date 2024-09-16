@@ -31,38 +31,34 @@ function is_convergent(tris_per_side, dt, max_time)
 		bound_fn
 	)
 	try
-		model(params, 3, false)
+		model(params, 2, false)
 	catch
 		return false
 	end
 	return true
 end
 
-# dt_L = 0.1
-# dt_L = 0.000948895
-dt_L = 9.241134960937499e-5 / 2
+dt_L = 0.1
+threshold = 1e-6
 
-# for tris_per_side in 10:5:160
-# for tris_per_side in 115:5:160
-for tris_per_side in [320]
+for tris_per_side in [10, 20, 40, 80, 160, 320]
 	global dt_L
-	while !is_convergent(tris_per_side, dt_L, dt_L * 100)
-		# dt_L -= 0.00005
+	timesteps_needed = (tris_per_side == 320 ? 100 : 50)
+	while !is_convergent(tris_per_side, dt_L, dt_L * timesteps_needed)
 		dt_L /= 2
 	end
-	# dt_R = dt_L + 0.00005
 	dt_R = dt_L * 2
-	while log(dt_R) - log(dt_L) > 1e-5
+	while log(dt_R) - log(dt_L) > threshold
 		dt_M = (dt_L + dt_R) / 2
 		@show tris_per_side, dt_L, dt_R, log(dt_R) - log(dt_L)
-		if is_convergent(tris_per_side, dt_M, dt_M * 100)
+		if is_convergent(tris_per_side, dt_M, dt_M * timesteps_needed)
 			dt_L = dt_M
 		else
 			dt_R = dt_M
 		end
 	end
 	@show tris_per_side, dt_L, dt_R
-	@assert is_convergent(tris_per_side, dt_L, dt_L * 200)
+	@assert is_convergent(tris_per_side, dt_L, dt_L * timesteps_needed * 2)
 	open("cfl_results.txt", "a") do file
 		s = string(tris_per_side) * ": " * string(dt_L) * " " * string(dt_R) * "\n"
 		print(s)
