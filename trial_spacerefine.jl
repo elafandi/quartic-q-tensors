@@ -13,15 +13,15 @@ function bound_fn(x, y)
 	[0.0 0.0; 0.0 0.0]
 end
 
-max_time = 0.8
+max_time = 0.1
+timestep = 0.000032
 epsilon = 1e-10
 L_1, L_2, L_3, L_4, L_5 = 1e-1, 1e-3, 1e-3, 1e-3, 1e-3
 aBulk, bBulk, cBulk = -0.3, -4.0, 4.0
 
 for tris_per_side in [10, 20, 40, 80, 400]
-	fileprefix = "space_refinement_results/" * string(tris_per_side) * "/"
+	fileprefix = "space_refinement_results/" * string(tris_per_side) * "_"
 	P, T, N, V, L = triangulate_square(2, 2, tris_per_side + 1)
-	timestep = (tris_per_side == 400) ? max_time/25000 : max_time/1600
 	params = ModelParams(
 		P,
 		T,

@@ -25,13 +25,21 @@ function crossmat(v, mat)
 	return [v[1] * mat[1,2] - v[2] * mat[1,1], v[1] * mat[2,2] - v[2] * mat[2,1]]
 end
 
-function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix=nothing, Q0=nothing, t0=0)
+function model(params::ModelParams; get_energy=true, fileprefix=nothing, Q0=nothing, t0=0, graph_times::Vector{Float64}=Float64[], saveQ_times::Vector{Float64}=Float64[])
 	# Step 1: Set up triangulation, global variables, and initial conditions
 
 	# Triangulation
 	P = params.P
 	T = params.T
 	N, V, L = params.N, params.V, params.L
+	
+	# HACKY MODIFICATION
+	Pc, _, Nc, _, _ = parse_distmesh("circle_362")
+	coarselist = Set{Int}()
+	for i=1:Nc
+		j = findmin(j->norm(Pc[i,:] - P[j,:]), 1:N)[2]
+		push!(coarselist, j)
+	end
 
 	# Time domain
 	max_time = params.max_time
@@ -199,9 +207,9 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			
 			# term 2/6 and 3/6
 			head_d2 = (L1 - 2*L3) * s_0/3
-			head_d3 = (L1 + 2*L3) * s_0/3
+			head_d3 = (L1 - 2*L3) * s_0/3
 			# head_c2 = (L2 - 2*L4) * s_0/3
-			# head_c3 = (L2 + 2*L4) * s_0/3
+			# head_c3 = (L2 - 2*L4) * s_0/3
 			for j_ind=1:3, k_ind=1:3
 				j, k = T[ell,j_ind], T[ell,k_ind]
 				for beta=1:2, gamma=1:2
@@ -234,9 +242,9 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			
 			# term 5/6 and 6/6
 			head_d5 = L1 + L3
-			head_d6 = L1 - L3
+			head_d6 = L1 + L3
 			# head_c5 = L2 + L4
-			# head_c6 = L2 - L4
+			# head_c6 = L2 + L4
 			for i_ind=1:3, j_ind=1:3, k_ind=1:3
 				i, j, k = T[ell,i_ind], T[ell,j_ind], T[ell,k_ind]
 				for alpha=1:2, beta=1:2, gamma=1:2
@@ -430,6 +438,37 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			plot!(Shape(Tuple{Int64, Int64}[]), linealpha=0, label="", fill_z = bound)
 		end
 	end
+	
+	# HACKY MODIFICATION
+	function plot_both(Q, scale, upper_bound)
+		plot(
+			# legend=false,
+			xlim=[-1,1],
+			ylim=[-1,1],
+			aspect_ratio=:equal
+		)
+		@showprogress for ell=1:L
+			p1, p2, p3 = map(i->Tuple(P[i,:]), T[ell,:])
+			Q1, Q2, Q3 = map(i->Q[2*i-1]*R[1] + Q[2*i]*R[2], T[ell,:])
+			lambda = maximum(eigvals((Q1 + Q2 + Q3) ./ 3))
+			tri = Shape([p1, p2, p3, p1])
+			plot!(tri, fill_z = lambda, linealpha=0, label="")
+		end
+		for bound in [0.0, upper_bound]
+			plot!(Shape(Tuple{Int64, Int64}[]), linealpha=0, label="", fill_z = bound)
+		end
+		@showprogress for i in coarselist
+			mat = sum(alpha->R[alpha] .* Q[(i-1)*2+alpha], 1:2)
+			if maximum(eigvals(mat)) == 0  # isotropic state
+				continue
+			end
+			vind = findmax(eigvals(mat))[2]
+			v = eigvecs(mat)[:,vind]
+			v .*= scale / norm(v)
+			plot!([P[i,1] - v[1] / 2, P[i,1] + v[1] / 2],
+					[P[i,2] - v[2] / 2, P[i,2] + v[2] / 2], linecolor="blue", label="")
+		end
+	end
 
 	function Snorm(Q)
 		res = 0.0
@@ -476,26 +515,19 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 		end
 		Q = newX
 		
-		if trialnum >= 3 && (current_time % 0.5 == 0 || current_time == timestep) && (current_time < 80 || current_time % 10 == 0)
-			if trialnum == 3 && (current_time in [timestep, 15, 30, 45, 60, 75, 90, 180, 270] || current_time % 100 == 0)
-				open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
-					write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
-				end
+		if current_time in graph_times
+			# HACKY MODIFICATION
+			plot_both(Q, 0.075, 0.2)
+			savefig(fileprefix * "_" * string(current_time) * ".png")
+			# plot_eigenvec(Q, 0.025)
+			# savefig(fileprefix * "_vec_" * string(current_time) * ".png")
+			# plot_eigenval(Q)
+			# savefig(fileprefix * "_val_" * string(current_time) * ".png")
+		end
+		if current_time in saveQ_times
+			open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
+				write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
 			end
-			if trialnum == 4 && (current_time in [timestep, 5, 10, 15, 20, 25, 30, 60, 90] || current_time % 100 == 0)
-				open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
-					write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
-				end
-			end
-			if trialnum == 5 && current_time in [timestep, 5, 10, 15, 20, 25, 30, 35, 40]
-				open(fileprefix * "_Q_" * string(current_time) * ".txt", "w") do file
-					write(file, string(Q))  # to be turned into paper graphs later via make_tactoid_diagrams.jl
-				end
-			end
-			plot_eigenvec(Q, 0.025)
-			savefig(fileprefix * "_vec_" * string(current_time) * ".png")
-			plot_eigenval(Q)
-			savefig(fileprefix * "_val_" * string(current_time) * ".png")
 		end
 		
 		if get_energy
@@ -513,11 +545,6 @@ function model(params::ModelParams, trialnum::Int=1, get_energy=true, fileprefix
 			# flush(stdout)
 		else
 			println("TIME:", current_time)
-		end
-		if trialnum == 1 && (current_time % 0.1 < 1e-10 || current_time % 0.1 > 0.1 - 1e-10)
-			open(fileprefix * "Q_" * string(current_time) * ".txt", "w") do file
-				write(file, string(Q))
-			end
 		end
 	end
 	if get_energy

@@ -1,16 +1,35 @@
 include("parse_distmesh.jl")
 using LinearAlgebra
-using Images
 using Plots
+using Images
+using ProgressMeter
 
-fileprefix = "tactoid_results/degree_one/tactoid_5809_1"
-times = [0.01, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 180.0, 270.0]
+# fileprefix = "tactoid_results/degree_one_L1=0.1/tactoid_5809_1"
+# times = [0.01, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 180.0, 270.0]
 
-# fileprefix = "tactoid_results/degree_minus_one/tactoid_5809_-1"
+# fileprefix = "tactoid_results/degree_one_L1=0.001/tactoid_5809_1"
+# times = [0.01, 30.0, 60.0, 90.0, 160.0, 230.0, 300.0, 450.0, 600.0]
+
+# fileprefix = "tactoid_results/degree_minus_one_L1=0.1/tactoid_5809_-1"
 # times = [0.01, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 60.0, 90.0]
 
-# fileprefix = "tactoid_results/degree_zero/tactoid_5809_0"
+# fileprefix = "tactoid_results/degree_minus_one_L1=0.001/tactoid_5809_-1"
+# times = [0.01, 20.0, 40.0, 60.0, 80.0, 100.0, 200.0, 300.0, 400.0]
+
+# fileprefix = "tactoid_results/degree_zero_L1=0.1/tactoid_5809_0"
 # times = [0.01, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0]
+
+# fileprefix = "tactoid_results/degree_zero_L1=0.001/tactoid_5809_0"
+# times = [0.01, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0]
+
+# fileprefix = "tactoid_results/reversed_L1=0.1/tactoid_5809_R"
+# times = [0.01, 5.0, 10.0, 15.0, 20.0, 40.0, 60.0, 80.0, 100.0]
+
+# fileprefix = "tactoid_results/reversed_L1=0.001/tactoid_5809_R"
+# times = [0.01, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 80.0, 100.0]
+
+fileprefix = "tactoid_results/degree_one_L1=0.1_L5=0/tactoid_5809_1"
+times = [0.01, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 180.0, 270.0]
 
 P, T, N, V, L = parse_distmesh("circle_5809")
 R = [[1 0; 0 -1], [0 1; 1 0]]
@@ -29,7 +48,7 @@ function plot_both(Q, scale, upper_bound)
 		size=(265,250), legend=false
 		# aspect_ratio=:equal
 	)
-	for ell=1:L
+	@showprogress for ell=1:L
 		p1, p2, p3 = map(i->Tuple(P[i,:]), T[ell,:])
 		Q1, Q2, Q3 = map(i->Q[2*i-1]*R[1] + Q[2*i]*R[2], T[ell,:])
 		lambda = maximum(eigvals((Q1 + Q2 + Q3) ./ 3))
@@ -71,7 +90,7 @@ upper_bound = 0.2  # better to have it consistent; it's just below for each anyw
 for i=1:9
 	Q, t = Qvec[i], times[i]
 	plot_both(Q, 0.05, upper_bound)
-	fname = fileprefix * "_both_" * string(t) * ".png"
+	fname = fileprefix * "_paper_" * string(t) * ".png"
 	savefig(fname)
 	A = load(fname)  # there's probably a more efficient way but meh
 	A = A[1:end-15, 10:end]
